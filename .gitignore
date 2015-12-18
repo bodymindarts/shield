@@ -9,6 +9,7 @@
 /redis-broker
 /rabbitmq-broker
 /s3
+/s3_elasticsearch
 /fs
 
 # ignore vim buffers
