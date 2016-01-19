@@ -4,17 +4,24 @@ set -ex
 
 export GOPATH=${PWD}/gopath
 export PATH=${PATH}:${GOPATH}/bin
-
 cd ${GOPATH}/src/github.com/starkandwayne/shield
 
-set -ex
-pwd
+echo "Working in $(pwd), with Go environment:"
 go env
+echo ; echo ; echo
 
+echo "Installing ginkog and gomega"
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
+echo ; echo ; echo
 
+echo "Restoring build dependencies via \`godep restore'"
 godep restore
-make
+echo ; echo ; echo
 
+echo "Running tests"
+make
+echo ; echo ; echo
+
+echo "SUCCESS"
 # vim:ft=bash
