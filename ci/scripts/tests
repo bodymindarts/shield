@@ -5,7 +5,7 @@ set -ex
 export GOPATH=${PWD}/gopath
 export PATH=${PATH}:${GOPATH}/bin
 
-cd ${GOPATH}/src/github.com/starkandwayne.com/shield
+cd ${GOPATH}/src/github.com/starkandwayne/shield
 
 set -ex
 pwd
