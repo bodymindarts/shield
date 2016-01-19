@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# change to root of release
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR/../..
+set -ex
+
+export GOPATH=${PWD}/gopath
+export PATH=${PATH}:${GOPATH}/bin
+
+cd ${GOPATH}/src/github.com/starkandwayne.com/shield
 
 set -ex
 pwd
@@ -10,6 +13,8 @@ go env
 
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
-godep restore
 
+godep restore
 make
+
+# vim:ft=bash
