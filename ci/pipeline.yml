@@ -19,9 +19,9 @@ jobs:
             platform: linux
             image:    docker:///starkandwayne/concourse-go#1.5
             inputs:
-              - { name: shield, path: . }
+              - { name: shield, path: gopath/src/github.com/starkandwayne/shield }
             run:
-              path: ./ci/scripts/tests
+              path: gopath/src/github.com/starkandwayne/shield/ci/scripts/tests
               args: []
 #          on_failure:
 #            put: slack
