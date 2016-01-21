@@ -48,6 +48,13 @@ type ElasticSearchEndpoint struct {
 	Restore             bool   `json:"restore"`
 }
 
+type ElasticSearchTargetEndpoint struct {
+	LogsearchRepository string `json:"es_name"`
+	Username            string `json:"es_username"`
+	Password            string `json:"es_password"`
+	URL                 string `json:"es_url"`
+	SkipSSLValidation   bool   `json:"skip_ssl_validation"`
+}
 type ElasticSearchOptions struct {
 	Type       string `json:"type"`
 	ESSettings `json:"settings"`
@@ -167,27 +174,30 @@ func (p S3ElasticSearchPlugin) Retrieve(endpoint plugin.ShieldEndpoint, file str
 }
 
 func (p S3ElasticSearchPlugin) Purge(endpoint plugin.ShieldEndpoint, file string) error {
-	var endPoint ElasticSearchEndpoint
+	var targetEndPoint ElasticSearchTargetEndpoint
 
-	passedIn, err := ioutil.ReadAll(os.Stdin)
+	fmt.Println("Environment Variables")
+	for _, e := range os.Environ() {
+		fmt.Println(e)
+	}
 
-	if err := json.Unmarshal(passedIn, &endPoint); err != nil {
+	targetString, _ := os.LookupEnv("SHIELD_TARGET_ENDPOINT")
+
+	if err := json.Unmarshal([]byte(targetString), &targetEndPoint); err != nil {
 		log.Fatalf("JSON unmarshaling failed: %s", err)
 	}
 
-	if endPoint.Restore != true {
-		log.Fatalf("Retrieve called with Backup Endpoint")
-	}
+	//fmt.Println("Json: %v", targetEndPoint)
 
-	host := endPoint.URL
+	host := targetEndPoint.URL
 
 	url := "/_snapshot/" + file
 
-	fmt.Printf("URL: %s\n\n", url)
+	fmt.Printf("Host: %s\nURL: %s\n\n", host, url)
 
-	resp, err := makeRequest("DELETE", fmt.Sprintf("%s%s", host, url), nil, endPoint.Username, endPoint.Password, endPoint.SkipSSLValidation)
-	if err != nil {
-		return err
+	resp, r_err := makeRequest("DELETE", fmt.Sprintf("%s%s", host, url), nil, targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
+	if r_err != nil {
+		return r_err
 	}
 	fmt.Printf("Purge Response: %s\n", resp.Status)
 	return nil
