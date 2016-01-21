@@ -14,7 +14,7 @@ func main() {
 		Version: "0.0.1",
 		Features: plugin.PluginFeatures{
 			Target: "yes",
-			Store:  "yes",
+			Store:  "no",
 		},
 	}
 
