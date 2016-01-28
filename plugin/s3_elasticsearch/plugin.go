@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/starkandwayne/shield/plugin"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -82,17 +81,13 @@ func (p S3ElasticSearchPlugin) Restore(endpoint plugin.ShieldEndpoint) error {
 }
 
 func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, error) {
-	// Read in LogSearch details
-	var endPoint ElasticSearchEndpoint
+	// Read in LogSearch Target details
+	var targetEndPoint ElasticSearchTargetEndpoint
 
-	passedIn, err := ioutil.ReadAll(os.Stdin)
+	targetString, _ := os.LookupEnv("SHIELD_TARGET_ENDPOINT")
 
-	if err := json.Unmarshal(passedIn, &endPoint); err != nil {
-		log.Fatalf("JSON unmarshaling failed: %s", err)
-	}
-
-	if endPoint.Restore != false {
-		log.Fatalf("Store called with Restore Endpoint")
+	if err := json.Unmarshal([]byte(targetString), &targetEndPoint); err != nil {
+		log.Fatalf("Target Endpoint JSON unmarshaling failed: %s", err)
 	}
 
 	//Collect S3 details
@@ -104,8 +99,8 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 	//TODO check if Repository Exists
 
 	// Prep Snapshot Repository
-	host := endPoint.URL
-	url := "/_snapshot/" + endPoint.LogsearchRepository
+	host := targetEndPoint.URL
+	url := "/_snapshot/" + targetEndPoint.LogsearchRepository
 
 	var settings ElasticSearchOptions
 
@@ -114,7 +109,7 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 	settings.ESSettings.AccessKey = s3.AccessKey
 	settings.ESSettings.SecretKey = s3.SecretKey
 	settings.ESSettings.Prefix = s3.PathPrefix
-	if endPoint.SkipSSLValidation == true {
+	if targetEndPoint.SkipSSLValidation == true {
 		settings.ESSettings.Protocol = "http"
 	} else {
 		settings.ESSettings.Protocol = "https"
@@ -124,7 +119,7 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 	data, _ := json.MarshalIndent(settings, "", "  ")
 	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
 
-	resp, err := makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), endPoint.Username, endPoint.Password, endPoint.SkipSSLValidation)
+	resp, err := makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return "", err
 	}
@@ -132,12 +127,12 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 	fmt.Printf("Create Repository Response: %s\n", resp.Status)
 	//Fire Snapshot
 
-	backup_name := genBackupName(endPoint.LogsearchRepository)
+	backup_name := genBackupName(targetEndPoint.LogsearchRepository)
 	url = "/_snapshot/" + backup_name + "?wait_for_completion=true"
 
 	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
 
-	resp, err = makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), endPoint.Username, endPoint.Password, endPoint.SkipSSLValidation)
+	resp, err = makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return "", err
 	}
@@ -147,25 +142,22 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 }
 
 func (p S3ElasticSearchPlugin) Retrieve(endpoint plugin.ShieldEndpoint, file string) error {
-	var endPoint ElasticSearchEndpoint
+	// Read in LogSearch Target details
+	var targetEndPoint ElasticSearchTargetEndpoint
 
-	passedIn, err := ioutil.ReadAll(os.Stdin)
+	targetString, _ := os.LookupEnv("SHIELD_TARGET_ENDPOINT")
 
-	if err := json.Unmarshal(passedIn, &endPoint); err != nil {
-		log.Fatalf("JSON unmarshaling failed: %s", err)
+	if err := json.Unmarshal([]byte(targetString), &targetEndPoint); err != nil {
+		log.Fatalf("Target Endpoint JSON unmarshaling failed: %s", err)
 	}
 
-	if endPoint.Restore != true {
-		log.Fatalf("Retrieve called with Backup Endpoint")
-	}
-
-	host := endPoint.URL
+	host := targetEndPoint.URL
 
 	url := "/_snapshot/" + file + "/_restore"
 
 	fmt.Printf("URL: %s\n\n", url)
 
-	resp, err := makeRequest("POST", fmt.Sprintf("%s%s", host, url), nil, endPoint.Username, endPoint.Password, endPoint.SkipSSLValidation)
+	resp, err := makeRequest("POST", fmt.Sprintf("%s%s", host, url), nil, targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return err
 	}
@@ -174,20 +166,14 @@ func (p S3ElasticSearchPlugin) Retrieve(endpoint plugin.ShieldEndpoint, file str
 }
 
 func (p S3ElasticSearchPlugin) Purge(endpoint plugin.ShieldEndpoint, file string) error {
+	// Read in LogSearch Target details
 	var targetEndPoint ElasticSearchTargetEndpoint
-
-	fmt.Println("Environment Variables")
-	for _, e := range os.Environ() {
-		fmt.Println(e)
-	}
 
 	targetString, _ := os.LookupEnv("SHIELD_TARGET_ENDPOINT")
 
 	if err := json.Unmarshal([]byte(targetString), &targetEndPoint); err != nil {
 		log.Fatalf("JSON unmarshaling failed: %s", err)
 	}
-
-	//fmt.Println("Json: %v", targetEndPoint)
 
 	host := targetEndPoint.URL
 
@@ -235,7 +221,7 @@ func makeRequest(method string, url string, body io.Reader, username string, pas
 }
 
 func getS3ConnInfo(e plugin.ShieldEndpoint) (S3ConnectionInfo, error) {
-	//	host, err := e.StringValue("s3_host")
+	//	host, err := e.StringValue("s3_host")  // ElasticSearch automatically selects the host
 	//	if err != nil {
 	//		return S3ConnectionInfo{}, err
 	//	}
