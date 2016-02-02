@@ -117,27 +117,27 @@ func (p S3ElasticSearchPlugin) Store(endpoint plugin.ShieldEndpoint) (string, er
 	settings.Compress = true
 
 	data, _ := json.MarshalIndent(settings, "", "  ")
-	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
+	//	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
 
 	resp, err := makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Printf("Create Repository Response: %s\n", resp.Status)
+	//	fmt.Printf("Create Repository Response: %s\n", resp.Status)
 	//Fire Snapshot
 
 	backup_name := genBackupName(targetEndPoint.LogsearchRepository)
 	url = "/_snapshot/" + backup_name + "?wait_for_completion=true"
 
-	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
+	//	fmt.Printf("URL: %s\n\nBody:\n%s\n\n", url, data)
 
 	resp, err = makeRequest("PUT", fmt.Sprintf("%s%s", host, url), bytes.NewBuffer(data), targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Printf("Snapshot Response: %s\n", resp.Status)
+	//	fmt.Printf("Snapshot Response: %s\n", resp.Status)
 	return backup_name, nil
 }
 
@@ -155,13 +155,13 @@ func (p S3ElasticSearchPlugin) Retrieve(endpoint plugin.ShieldEndpoint, file str
 
 	url := "/_snapshot/" + file + "/_restore"
 
-	fmt.Printf("URL: %s\n\n", url)
+	//	fmt.Printf("URL: %s\n\n", url)
 
 	resp, err := makeRequest("POST", fmt.Sprintf("%s%s", host, url), nil, targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Restore Response: %s\n", resp.Status)
+	//	fmt.Printf("Restore Response: %s\n", resp.Status)
 	return nil
 }
 
@@ -179,13 +179,13 @@ func (p S3ElasticSearchPlugin) Purge(endpoint plugin.ShieldEndpoint, file string
 
 	url := "/_snapshot/" + file
 
-	fmt.Printf("Host: %s\nURL: %s\n\n", host, url)
+	//	fmt.Printf("Host: %s\nURL: %s\n\n", host, url)
 
 	resp, r_err := makeRequest("DELETE", fmt.Sprintf("%s%s", host, url), nil, targetEndPoint.Username, targetEndPoint.Password, targetEndPoint.SkipSSLValidation)
 	if r_err != nil {
 		return r_err
 	}
-	fmt.Printf("Purge Response: %s\n", resp.Status)
+	//	fmt.Printf("Purge Response: %s\n", resp.Status)
 	return nil
 }
 
