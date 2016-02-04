@@ -2,15 +2,16 @@ package supervisor_test
 
 import (
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/starkandwayne/shield/supervisor"
 	"net/http"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 
 	// sql drivers
 	_ "github.com/mattn/go-sqlite3"
+
+	. "github.com/starkandwayne/shield/supervisor"
 )
 
 var _ = Describe("/v1/jobs API", func() {
@@ -860,6 +861,12 @@ var _ = Describe("/v1/jobs API", func() {
 		Ω(res.Code).Should(Equal(200))
 		Ω(res.Body.String()).Should(MatchJSON(`{"ok":"scheduled"}`))
 		Eventually(adhocChan).Should(Receive())
+	})
+
+	It("validates JSON payloads", func() {
+		JSONValidated(API, "POST", "/v1/jobs")
+		JSONValidated(API, "PUT", "/v1/job/"+REDIS_S3_WEEKLY)
+		JSONValidated(API, "POST", "/v1/job/"+REDIS_S3_WEEKLY+"/run")
 	})
 
 	It("ignores other HTTP methods", func() {

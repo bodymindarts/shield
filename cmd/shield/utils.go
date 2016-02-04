@@ -10,7 +10,11 @@ func BoolString(tf bool) string {
 	if tf {
 		return "Y"
 	}
-	return "F"
+	return "N"
+}
+
+func CurrentUser() string {
+	return fmt.Sprintf("%s@%s", os.Getenv("USER"), os.Getenv("HOSTNAME"))
 }
 
 func DEBUG(format string, args ...interface{}) {

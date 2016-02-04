@@ -48,7 +48,12 @@ func NewCommand() *Command {
 }
 
 func (c *Command) HelpBreak() {
-		c.help = append(c.help, []string{ "", "" })
+	c.help = append(c.help, []string{"", ""})
+}
+
+func (c *Command) HelpGroup(groupname string) {
+	groupname = "@M{" + fmt.Sprintf("%s", groupname) + "}"
+	c.help = append(c.help, []string{groupname, ""})
 }
 
 func (c *Command) Usage() string {
@@ -73,7 +78,7 @@ func (c *Command) Dispatch(command string, help string, fn Handler) {
 	}
 
 	if help != "" {
-		c.help = append(c.help, []string{ command, help })
+		c.help = append(c.help, []string{command, help})
 	}
 	c.commands[command] = fn
 }
@@ -92,10 +97,17 @@ func (c *Command) With(opts Options) *Command {
 }
 
 func (c *Command) Execute(cmd ...string) error {
+	var last = 0
 	for i := 1; i <= len(cmd); i++ {
 		command := strings.Join(cmd[0:i], " ")
+		if _, ok := c.commands[command]; ok {
+			last = i
+		}
+	}
+	if last != 0 {
+		command := strings.Join(cmd[0:last], " ")
 		if fn, ok := c.commands[command]; ok {
-			return fn(c.options, cmd[i:])
+			return fn(c.options, cmd[last:])
 		}
 	}
 	return fmt.Errorf("unrecognized command %s\n", strings.Join(cmd, " "))

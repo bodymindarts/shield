@@ -2,10 +2,12 @@ package supervisor_test
 
 import (
 	"fmt"
+	"net/http"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	. "github.com/starkandwayne/shield/supervisor"
-	"net/http"
 
 	// sql drivers
 	_ "github.com/mattn/go-sqlite3"
@@ -224,6 +226,11 @@ var _ = Describe("HTTP API /v1/retention", func() {
 		res := DELETE(API, "/v1/retention/"+SHORT)
 		Ω(res.Code).Should(Equal(403))
 		Ω(res.Body.String()).Should(Equal(""))
+	})
+
+	It("validates JSON payloads", func() {
+		JSONValidated(API, "POST", "/v1/retention")
+		JSONValidated(API, "PUT", "/v1/retention/"+SHORT)
 	})
 
 	It("ignores other HTTP methods", func() {

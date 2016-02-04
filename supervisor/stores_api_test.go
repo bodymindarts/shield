@@ -2,13 +2,15 @@ package supervisor_test
 
 import (
 	"fmt"
+	"net/http"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/starkandwayne/shield/supervisor"
-	"net/http"
 
 	// sql drivers
 	_ "github.com/mattn/go-sqlite3"
+
+	. "github.com/starkandwayne/shield/supervisor"
 )
 
 var _ = Describe("/v1/stores API", func() {
@@ -265,6 +267,11 @@ var _ = Describe("/v1/stores API", func() {
 		res := DELETE(API, "/v1/store/"+STORE_S3)
 		Ω(res.Code).Should(Equal(403))
 		Ω(res.Body.String()).Should(Equal(""))
+	})
+
+	It("validates JSON payloads", func() {
+		JSONValidated(API, "POST", "/v1/stores")
+		JSONValidated(API, "PUT", "/v1/store/"+STORE_S3)
 	})
 
 	It("ignores other HTTP methods", func() {

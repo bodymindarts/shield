@@ -4,7 +4,11 @@
 BUILD_TYPE?=build
 
 # Everything; this is the default behavior
-all: tests shield plugins
+all: format tests shield plugins
+
+# go fmt ftw
+format:
+	go fmt ./...
 
 # Running Tests
 tests: test
@@ -37,6 +41,7 @@ plugins:
 	go $(BUILD_TYPE) ./plugin/postgres
 	go $(BUILD_TYPE) ./plugin/redis-broker
 	go $(BUILD_TYPE) ./plugin/s3
+	go $(BUILD_TYPE) ./plugin/mysql
 	go $(BUILD_TYPE) ./plugin/rabbitmq-broker
 	go $(BUILD_TYPE) ./plugin/s3_elasticsearch
 

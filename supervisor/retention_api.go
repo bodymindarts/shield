@@ -3,10 +3,13 @@ package supervisor
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pborman/uuid"
-	"github.com/starkandwayne/shield/db"
+	"io"
 	"net/http"
 	"regexp"
+
+	"github.com/pborman/uuid"
+
+	"github.com/starkandwayne/shield/db"
 )
 
 type RetentionAPI struct {
@@ -45,7 +48,10 @@ func (self RetentionAPI) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			Summary string `json:"summary"`
 			Expires uint   `json:"expires"`
 		}
-		json.NewDecoder(req.Body).Decode(&params)
+		if err := json.NewDecoder(req.Body).Decode(&params); err != nil && err != io.EOF {
+			bailWithError(w, ClientErrorf("bad JSON payload: %s", err))
+			return
+		}
 
 		e := MissingParameters()
 		e.Check("name", params.Name)
@@ -109,7 +115,10 @@ func (self RetentionAPI) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			Summary string `json:"summary"`
 			Expires uint   `json:"expires"`
 		}
-		json.NewDecoder(req.Body).Decode(&params)
+		if err := json.NewDecoder(req.Body).Decode(&params); err != nil && err != io.EOF {
+			bailWithError(w, ClientErrorf("bad JSON payload: %s", err))
+			return
+		}
 
 		e := MissingParameters()
 		e.Check("name", params.Name)

@@ -2,11 +2,13 @@ package supervisor_test
 
 import (
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/starkandwayne/shield/supervisor"
 	"net/http"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	. "github.com/starkandwayne/shield/supervisor"
 
 	// sql drivers
 	_ "github.com/mattn/go-sqlite3"
@@ -468,6 +470,11 @@ var _ = Describe("/v1/archives API", func() {
 		res = GET(API, "/v1/archives?target="+TARGET_REDIS)
 		Ω(res.Code).Should(Equal(200))
 		Ω(res.Body.String()).Should(MatchJSON(`[]`))
+	})
+
+	It("validates JSON payloads", func() {
+		JSONValidated(API, "PUT", "/v1/archive/"+REDIS_ARCHIVE_1)
+		JSONValidated(API, "POST", "/v1/archive/"+REDIS_ARCHIVE_1+"/restore")
 	})
 
 	It("ignores other HTTP methods", func() {
